@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Nalbur.Api.Endpoints;
 using Nalbur.Api.ErrorHandling;
 using Nalbur.Application;
@@ -61,13 +61,18 @@ app.MapScalarApiReference(options => options.WithTitle($"{shopName} API"));
 
 // ---- Endpoints ----
 // 200 when the API and its database are up, 503 otherwise. Docker HEALTHCHECK uses this.
-app.MapHealthChecks("/health", new HealthCheckOptions
+// MapGet instead of MapHealthChecks so the endpoint also shows up in the OpenAPI document.
+app.MapGet("/health", async (HealthCheckService health, CancellationToken ct) =>
 {
-    ResponseWriter = (context, report) => context.Response.WriteAsJsonAsync(new
+    var report = await health.CheckHealthAsync(ct);
+    var body = new
     {
         status = report.Status.ToString().ToLowerInvariant(),
         checks = report.Entries.ToDictionary(e => e.Key, e => e.Value.Status.ToString().ToLowerInvariant()),
-    }),
+    };
+    return report.Status == HealthStatus.Healthy
+        ? Results.Ok(body)
+        : Results.Json(body, statusCode: StatusCodes.Status503ServiceUnavailable);
 });
 
 app.MapGet("/api/info", () => Results.Ok(new

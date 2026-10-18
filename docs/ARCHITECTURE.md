@@ -20,28 +20,27 @@ after `pg_isready` succeeds.
 ## Backend layers (onion)
 
 ```
-        ┌───────────────────────────────────────────┐
-        │  Nalbur.Api  (endpoints, errors → HTTP, DI)│
-        │  ┌─────────────────────────────────────┐  │
-        │  │ Nalbur.Infrastructure                │  │
-        │  │ (EF Core + PostgreSQL, seed)         │  │
-        │  │  ┌───────────────────────────────┐   │  │
-        │  │  │ Nalbur.Application            │   │  │
-        │  │  │ (ProductService, DTOs,        │   │  │
-        │  │  │  StockSettings)               │   │  │
-        │  │  │  ┌─────────────────────────┐  │   │  │
-        │  │  │  │ Nalbur.Domain           │  │   │  │
-        │  │  │  │ Product, StockMovement, │  │   │  │
-        │  │  │  │ rules, IProductRepository│ │   │  │
-        │  │  │  └─────────────────────────┘  │   │  │
-        │  │  └───────────────────────────────┘   │  │
-        │  └─────────────────────────────────────┘  │
-        └───────────────────────────────────────────┘
+        ┌────────────────────────────────────────────────────────────────┐
+        │  Nalbur.Api                       Nalbur.Infrastructure        │
+        │  (endpoints, errors → HTTP, DI)   (EF Core + PostgreSQL, seed) │
+        │                                                                │
+        │      ┌──────────────────────────────────────────────────┐      │
+        │      │ Nalbur.Application                               │      │
+        │      │ (ProductService, DTOs, StockSettings)            │      │
+        │      │    ┌────────────────────────────────────────┐    │      │
+        │      │    │ Nalbur.Domain                          │    │      │
+        │      │    │ Product, StockMovement, rules,         │    │      │
+        │      │    │ IProductRepository                     │    │      │
+        │      │    └────────────────────────────────────────┘    │      │
+        │      └──────────────────────────────────────────────────┘      │
+        │                                                                │
+        └────────────────────────────────────────────────────────────────┘
 ```
 
-Every reference points **inward**. The repository interface lives in Domain and
-Infrastructure implements it (dependency inversion). The API project is the
-composition root and the only place that knows HTTP status codes.
+Api and Infrastructure share the outer ring, and every reference points **inward**.
+The repository interface lives in Domain and Infrastructure implements it (dependency
+inversion). The API project is the composition root and the only place that knows HTTP
+status codes; it touches Infrastructure only through `AddInfrastructure(...)` in `Program.cs`.
 
 | Project | References |
 |---|---|
