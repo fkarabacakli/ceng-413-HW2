@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Nalbur.Domain/Nalbur.Domain.csproj" />
+    <Project Path="src/Nalbur.Application/Nalbur.Application.csproj" />
+    <Project Path="src/Nalbur.Infrastructure/Nalbur.Infrastructure.csproj" />
+    <Project Path="src/Nalbur.Api/Nalbur.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Nalbur.Tests/Nalbur.Tests.csproj" />
+  </Folder>
+</Solution>

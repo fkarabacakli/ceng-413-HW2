@@ -1,0 +1,24 @@
+# Build output from local builds (the image builds its own)
+**/bin/
+**/obj/
+**/TestResults/
+
+# IDE and OS files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+.DS_Store
+
+# Git and Docker files are not needed inside the image
+.git/
+.gitignore
+Dockerfile
+.dockerignore
+
+# Local secrets / environment files must never enter the image
+.env
+*.env
+**/appsettings.Development.json
+**/secrets.json

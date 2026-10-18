@@ -1,0 +1,22 @@
+# .NET
+**/bin/
+**/obj/
+**/TestResults/
+*.user
+.vs/
+
+# Node
+node_modules/
+dist/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Secrets and local settings
+.env
+appsettings.Development.json
+
+# Personal study notes (not part of the submission)
+NOTLAR.md

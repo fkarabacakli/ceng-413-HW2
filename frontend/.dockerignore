@@ -1,0 +1,17 @@
+# Installed and built inside the image, never copied from the host
+node_modules/
+dist/
+
+# Git, editor and Docker files
+.git/
+.gitignore
+.vscode/
+.idea/
+.DS_Store
+Dockerfile
+.dockerignore
+
+# Local environment / secrets
+.env
+.env.*
+npm-debug.log*

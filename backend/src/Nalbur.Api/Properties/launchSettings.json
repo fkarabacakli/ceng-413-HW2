@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5080",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "SHOP_NAME": "Nalbur Stok (local)",
+        "CRITICAL_STOCK_DEFAULT": "5",
+        "SEED_SAMPLE_DATA": "true",
+        "ALLOWED_ORIGINS": "http://localhost:5173"
+      }
+    }
+  }
+}

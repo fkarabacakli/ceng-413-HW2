@@ -1,0 +1,49 @@
+# One command builds and starts all three containers: docker compose up --build
+# The database password comes from .env (copy .env.example). It is never written in this file.
+services:
+  db:
+    image: postgres:17.6
+    environment:
+      POSTGRES_DB: nalbur
+      POSTGRES_USER: nalbur
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?copy .env.example to .env and set POSTGRES_PASSWORD}
+    volumes:
+      # The stock ledger lives in a named volume, so it survives `docker compose down`.
+      # Only `docker compose down -v` deletes it.
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432" # for local `dotnet run` and DB tools; the api uses the network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nalbur -d nalbur"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./backend
+    image: nalbur-api:1.0.0
+    environment:
+      ConnectionStrings__Nalbur: Host=db;Port=5432;Database=nalbur;Username=nalbur;Password=${POSTGRES_PASSWORD:?copy .env.example to .env and set POSTGRES_PASSWORD}
+      SHOP_NAME: ${SHOP_NAME:-Nalbur Stok}
+      CRITICAL_STOCK_DEFAULT: ${CRITICAL_STOCK_DEFAULT:-5}
+      SEED_SAMPLE_DATA: ${SEED_SAMPLE_DATA:-true}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./frontend
+    image: nalbur-web:1.0.0
+    environment:
+      API_UPSTREAM: http://api:8080
+    ports:
+      - "3000:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
