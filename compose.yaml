@@ -1,4 +1,4 @@
-# One command builds and starts all three containers: docker compose up --build
+# One command builds and starts all three services (db, app, web): docker compose up -d --build
 # The database password comes from .env (copy .env.example). It is never written in this file.
 services:
   db:
@@ -12,14 +12,14 @@ services:
       # Only `docker compose down -v` deletes it.
       - pgdata:/var/lib/postgresql/data
     ports:
-      - "${POSTGRES_PORT:-5432}:5432" # for local `dotnet run` and DB tools; the api uses the network
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432" # localhost only, for local `dotnet run` and DB tools; app uses the network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nalbur -d nalbur"]
       interval: 5s
       timeout: 3s
       retries: 10
 
-  api:
+  app:
     build: ./backend
     image: nalbur-api:1.0.0
     environment:
@@ -38,11 +38,11 @@ services:
     build: ./frontend
     image: nalbur-web:1.0.0
     environment:
-      API_UPSTREAM: http://api:8080
+      API_UPSTREAM: http://app:8080
     ports:
       - "3000:8080"
     depends_on:
-      api:
+      app:
         condition: service_healthy
 
 volumes:

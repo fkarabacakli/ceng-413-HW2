@@ -1,10 +1,10 @@
 # Screenshots
 
-**`docker images` and the running containers answering a request** (`docker ps`, then `curl localhost:3000/api/info`):
+**`docker compose ps` and a request that proves the state works:** all three services (`db`, `app`, `web`) are running and healthy; the POST tries to add `HW2-002` and gets 409 because that product was already saved, and the GET lists the products stored in PostgreSQL:
 
-![docker images, docker ps and curl](docs/pics/05.png)
+![docker compose ps, POST and GET /api/products](docs/pics/04.png)
 
-**The web app** at http://localhost:3000 (React served by nginx, data from the API and PostgreSQL):
+**The web app** at http://localhost:3000 (React served by nginx, data from the app and PostgreSQL):
 
 ![Nalbur Stok web app](docs/pics/01.png)
 
@@ -16,6 +16,6 @@
 
 ![GET /api/summary in Scalar](docs/pics/03.png)
 
-**Docker Desktop:** the three containers of the `ceng413-hw1` project running:
+**Stateless test:** the products `HW2-001` and `HW2-002` are still there after `docker compose rm -sf app` and after `docker compose down`; after `docker compose down -v` the volume `hw2_pgdata` is removed and the result is `[]`:
 
-![Docker Desktop containers](docs/pics/04.png)
+![docker compose rm, down and down -v test](docs/pics/05.png)

@@ -6,12 +6,12 @@ Every change to stock is a ledger line (in or out); the stock can never go below
 ## Containers
 
 ```
-Browser ──► web (nginx, :3000 → 8080) ──/api, /health──► api (ASP.NET Core, :8080) ──► db (PostgreSQL 17, :5432)
+Browser ──► web (nginx, :3000 → 8080) ──/api, /health──► app (ASP.NET Core, :8080) ──► db (PostgreSQL 17, :5432)
               serves the React build                      onion layers, EF Core           volume: pgdata
 ```
 
 The browser only talks to `web`. nginx serves the static React files and forwards
-`/api/*` and `/health` to the `api` container over the Compose network, so there is
+`/api/*` and `/health` to the `app` container over the Compose network, so there is
 one origin and no CORS in production. The API stores the ledger in the `db` container,
 whose data lives in the named volume `pgdata`, so it survives `docker compose down`
 (only `docker compose down -v` deletes it). Compose starts `db` first and the API only
@@ -106,14 +106,14 @@ dotnet ef migrations add <Name> --project src/Nalbur.Infrastructure \
 
 | Variable | Container | Default | Purpose |
 |---|---|---|---|
-| `SHOP_NAME` | api | `Nalbur Stok` | Shown in the header and `/api/info` |
-| `CRITICAL_STOCK_DEFAULT` | api | `5` | Critical level for new products that do not give one |
-| `SEED_SAMPLE_DATA` | api | `false` (`true` in Compose) | Load nine sample products with two weeks of history |
-| `ConnectionStrings__Nalbur` | api | none (required) | PostgreSQL connection string; Compose builds it from `POSTGRES_PASSWORD` |
-| `ASPNETCORE_HTTP_PORTS` | api | `8080` | Port Kestrel listens on |
-| `ALLOWED_ORIGINS` | api | empty | CORS origins, only for local `npm run dev` |
-| `API_UPSTREAM` | web | `http://api:8080` | Where nginx forwards `/api` |
-| `POSTGRES_PASSWORD` | db, api | none (required) | Database password, set in `.env`; Compose stops with an error if it is missing |
+| `SHOP_NAME` | app | `Nalbur Stok` | Shown in the header and `/api/info` |
+| `CRITICAL_STOCK_DEFAULT` | app | `5` | Critical level for new products that do not give one |
+| `SEED_SAMPLE_DATA` | app | `false` (`true` in Compose) | Load nine sample products with two weeks of history |
+| `ConnectionStrings__Nalbur` | app | none (required) | PostgreSQL connection string; Compose builds it from `POSTGRES_PASSWORD` |
+| `ASPNETCORE_HTTP_PORTS` | app | `8080` | Port Kestrel listens on |
+| `ALLOWED_ORIGINS` | app | empty | CORS origins, only for local `npm run dev` |
+| `API_UPSTREAM` | web | `http://app:8080` | Where nginx forwards `/api` |
+| `POSTGRES_PASSWORD` | db, app | none (required) | Database password, set in `.env`; Compose stops with an error if it is missing |
 | `POSTGRES_PORT` | db | `5432` | Host port for local development and DB tools |
 
 ## Try it with curl

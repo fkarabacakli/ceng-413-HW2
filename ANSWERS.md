@@ -1,35 +1,32 @@
-# HW-1 Answers
+# HW-2 Answers
 
-## 1. Order of the Dockerfile instructions
+## 1. Calling the second service by name
 
-Docker saves every instruction as a layer in its cache. If one layer changes, Docker has to build that layer and all the layers after it again.
-In my backend Dockerfile, I first copy only `Nalbur.slnx` and the `.csproj` files and run `dotnet restore`. After that, I copy the rest of the code with `COPY . .`.
-The `.csproj` files do not change often, but I change the `.cs` files all the time. So when I edit the code, the restore step comes from the cache and the NuGet packages are not downloaded again.
-If I put `COPY . .` before `RUN dotnet restore`, every small code change would break the cache of the restore step. Then every build would download all the packages again and it would be much slower.
-I did the same thing in the frontend: first `package.json` and `package-lock.json`, then `npm ci`, and then the source code.
+Docker Compose creates a network for my project (`hw2_default`) and connects all the services to it. This network has its own DNS server, so every container can find the others by their service name.
+That is why my app uses `Host=db` in the connection string, and nginx in the `web` container sends `/api` requests to `http://app:8080`. Docker turns `db` and `app` into the right container IP addresses, and I never have to write an IP.
+The default `bridge` network that `docker run` uses does not have this DNS, so containers on it can only reach each other by IP address. The IP can change every time a container starts, so it is not a good idea to use it.
+If I want names to work without Compose, I have to create my own network with `docker network create` and start the containers on it.
 
-## 2. Data inside a container
+## 2. Stateless and stateful services
 
-When a container is deleted, the data inside it is deleted too. So if I kept the stock data inside the API container, `docker compose down` would delete all of it.
-To keep the data, it must be stored outside the container, in a volume or a bind mount.
-In my project the API container does not keep any data. The data is stored in a separate PostgreSQL container, and PostgreSQL writes it to a named volume called `pgdata`.
-Because of this, the products and stock movements are still there after `docker compose down` and `up`. Only `docker compose down -v` deletes them.
-I think important data should be in a database with its own volume, not in the application container. Then I can delete or update the application container at any time without losing data.
+`app` and `web` are stateless. `app` keeps all products and stock movements in PostgreSQL and does not write anything to its own disk, and `web` only serves static files. `db` is the only stateful service, because PostgreSQL writes its data to the named volume `pgdata`.
+To test this, I added two products (`HW2-001` and `HW2-002`) with POST requests, then checked them with `GET /api/products?search=HW2` after each step (screenshot `docs/pics/05.png`):
+- `docker compose rm -sf app` and `docker compose up -d`: the app container was deleted and created again, but both products were still there.
+- `docker compose down` and `docker compose up -d`: all containers and the `hw2_default` network were deleted, but both products were still there, because the volume was not deleted.
+- `docker compose down -v` and `docker compose up -d`: this time the `hw2_pgdata` volume was deleted too, and the result was `[]`, so my products were gone.
+After `down -v` the app shows sample products again, but this is only because `SEED_SAMPLE_DATA=true` fills an empty database at startup. They are new rows, not the old data.
 
-## 3. The `latest` tag
+## 3. Where the database password should come from
 
-The `latest` tag is not fixed. Today it can point to one version, and a few months later it can point to a new major version.
-This means the same Dockerfile can create a different image on another computer or on another day, and a build that worked before can break even if I did not change my code.
-Because of this, I used fixed versions for all base images: `mcr.microsoft.com/dotnet/sdk:10.0`, `aspnet:10.0`, `node:22-alpine`, `nginxinc/nginx-unprivileged:1.27-alpine` and `postgres:17.6`.
-The NuGet package versions are also fixed in the `.csproj` files, and `npm ci` installs exactly the versions in `package-lock.json`.
-To be even safer, I could use a full patch version or an `@sha256:` digest.
+The password should come from outside the code and the image, for example from environment variables or a secret manager. In my project it is in a `.env` file that is listed in `.gitignore`, and `compose.yaml` reads it with `${POSTGRES_PASSWORD}`. I only commit `.env.example` with a fake value.
+If the `.env` file is missing, Compose stops with an error, so the system cannot start with an empty or default password by mistake.
+Committing a password is a problem even in a private repository, because Git keeps the full history. If I delete the password in a later commit, it is still in the old commits.
+Also, many people and tools can read a private repository (classmates, CI services, forks, or someone who gets access later). If it is leaked once, the only real fix is to change the password everywhere.
 
-## Note: image size (multi-stage build)
+## Bonus: third service
 
-The final `nalbur-api:1.0.0` image is 363 MB, but the SDK build stage (`docker build --target build`) is 1.98 GB. So the multi-stage build makes the image about 82% smaller.
-For the frontend, the final nginx image is 74.9 MB and the Node build stage is 346 MB.
+My system has a third service, `web`. It is an nginx reverse proxy that serves the React frontend and forwards `/api` and `/health` to `app`. So the browser only talks to one address (`localhost:3000`), and there is no CORS problem.
 
 ## Note: use of an AI assistant
 
-I used an AI assistant mainly to write the frontend code. It also helped with parts of the backend (the PostgreSQL setup, the API docs
-and the health check).
+I used an AI assistant in this homework. It helped me compare my project with the assignment, rename the service to `app`, and prepare a first draft of these answers. I ran the tests myself and changed the answers to match what I saw.

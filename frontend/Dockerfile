@@ -18,7 +18,7 @@ COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # Where nginx forwards /api requests. Override at run time if needed.
-ENV API_UPSTREAM=http://api:8080
+ENV API_UPSTREAM=http://app:8080
 
 USER 101
 EXPOSE 8080
