@@ -29,4 +29,4 @@ My system has a third service, `web`. It is an nginx reverse proxy that serves t
 
 ## Note: use of an AI assistant
 
-I used an AI assistant in this homework. It helped me compare my project with the assignment, rename the service to `app`, and prepare a first draft of these answers. I ran the tests myself and changed the answers to match what I saw.
+I used an AI assistant in this homework. It helped me compare my project with the assignment, I ran the tests myself and changed the answers to match what I saw.
